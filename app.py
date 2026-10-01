@@ -2330,40 +2330,40 @@ with clear_col2:
 
 
 # ============================================================
-# FOOTER
+# COMPACT FOOTER
 # ============================================================
 
 st.markdown(
     """
     <div style="
-        margin-top:50px;
-        padding:25px 10px 10px 10px;
+        margin-top:35px;
+        padding:16px 8px 6px 8px;
         border-top:1px solid #293442;
         text-align:center;
     ">
 
         <div style="
-            color:#e5e7eb;
-            font-size:15px;
-            font-weight:650;
-            margin-bottom:8px;
+            color:#cbd5e1;
+            font-size:12px;
+            font-weight:500;
+            margin-bottom:5px;
         ">
             Every word you listen to can become knowledge you remember.
         </div>
 
         <div style="
             color:#ffffff;
-            font-size:14px;
-            font-weight:750;
-            margin-top:8px;
+            font-size:12px;
+            font-weight:650;
+            margin-top:3px;
         ">
             🎙️ Document Voice Studio
         </div>
 
         <div style="
             color:#6b7280;
-            font-size:12px;
-            margin-top:5px;
+            font-size:10px;
+            margin-top:3px;
         ">
             Listen • Learn • Remember • Grow
         </div>
