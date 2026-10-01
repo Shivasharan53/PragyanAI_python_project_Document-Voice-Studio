@@ -291,34 +291,6 @@ st.markdown(
         border-radius: 12px !important;
     }
 
-
-    /* ================================
-       FOOTER
-       ================================ */
-
-    .footer-quote {
-        text-align: center;
-        color: #cbd5e1;
-        font-size: 15px;
-        font-weight: 600;
-        margin-top: 10px;
-    }
-
-    .footer-brand {
-        text-align: center;
-        color: #ffffff;
-        font-weight: 750;
-        font-size: 14px;
-        margin-top: 8px;
-    }
-
-    .footer-small {
-        text-align: center;
-        color: #6b7280;
-        font-size: 12px;
-        margin-top: 5px;
-    }
-
     </style>
     """,
     unsafe_allow_html=True
@@ -2327,3 +2299,28 @@ with clear_col2:
         )
 
         st.rerun()
+
+
+# ============================================================
+# CLEAR ALL FUNCTION
+# ============================================================
+
+def clear_all():
+
+    # Clear document
+    st.session_state.pages = []
+
+    # Reset page
+    st.session_state.current_page = 0
+
+    # Clear document information
+    st.session_state.file_name = ""
+    st.session_state.file_id = None
+
+    # Reset detected language
+    st.session_state.detected_language = "en"
+
+    # Clear generated audio
+    st.session_state.page_audio = None
+    st.session_state.paragraph_audio = {}
+    st.session_state.sentence_audio = {}
