@@ -1,30 +1,15 @@
 # ============================================================
-# DOCUMENT VOICE STUDIO
-# Modern PDF → Voice Application
-#
-# Features:
-# PDF Upload
-# Page-by-Page Reading
-# Page Statistics
-# Paragraph Detection
-# Sentence Detection
-# Paragraph Voice
-# Sentence Voice
-# Audio Playback
-# Audio Download
-# Clear All
+# 🎙️ DOCUMENT VOICE STUDIO
+# PDF → TEXT → PAGE → PARAGRAPH → SENTENCE → VOICE
 # ============================================================
 
-
-# ============================================================
-# INSTALL
-# ============================================================
-
-# Run these once in terminal:
+# Install:
 #
-# pip install streamlit pypdf gTTS
+# pip install streamlit pypdf gTTS langdetect
 #
-# ============================================================
+# Run:
+#
+# streamlit run app.py
 
 
 # ============================================================
@@ -34,13 +19,15 @@
 import streamlit as st
 from pypdf import PdfReader
 from gtts import gTTS
+from langdetect import detect
 
 import re
 import os
+import hashlib
 
 
 # ============================================================
-# PAGE CONFIG
+# PAGE CONFIGURATION
 # ============================================================
 
 st.set_page_config(
@@ -59,141 +46,168 @@ st.markdown(
     """
     <style>
 
-    /* ================================
-       GLOBAL
-    ================================= */
+    /* ======================================================
+       GENERAL
+    ====================================================== */
 
     .block-container {
-        padding-top: 2rem;
-        padding-bottom: 3rem;
         max-width: 1400px;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
     }
 
 
-    /* ================================
-       MAIN TITLE
-    ================================= */
-
-    .main-title {
-        font-size: 42px;
-        font-weight: 700;
-        letter-spacing: -1px;
-        margin-bottom: 5px;
-    }
-
-    .main-subtitle {
-        font-size: 16px;
-        color: #6b7280;
-        margin-bottom: 30px;
-    }
-
-
-    /* ================================
-       DASHBOARD CARDS
-    ================================= */
-
-    .dashboard-card {
-
-        padding: 20px;
-
-        border-radius: 18px;
-
-        background: #ffffff;
-
-        border: 1px solid #e5e7eb;
-
-        min-height: 120px;
-
-        box-shadow:
-            0 4px 15px rgba(
-                0,
-                0,
-                0,
-                0.04
-            );
-    }
-
-
-    .card-title {
-
-        font-size: 14px;
-
-        color: #6b7280;
-
-        margin-bottom: 8px;
-    }
-
-
-    .card-value {
-
-        font-size: 30px;
-
-        font-weight: 700;
-
-        color: #111827;
-    }
-
-
-    /* ================================
-       SECTION
-    ================================= */
-
-    .section-title {
-
-        font-size: 24px;
-
-        font-weight: 650;
-
-        margin-top: 25px;
-
-        margin-bottom: 15px;
-    }
-
-
-    /* ================================
+    /* ======================================================
        SIDEBAR
-    ================================= */
+    ====================================================== */
 
     section[data-testid="stSidebar"] {
+        border-right: 1px solid #e5e7eb;
+    }
 
-        border-right:
-            1px solid #e5e7eb;
+    .sidebar-brand {
+        font-size: 24px;
+        font-weight: 750;
+        margin-bottom: 2px;
+    }
+
+    .sidebar-subtitle {
+        font-size: 13px;
+        color: #6b7280;
+        margin-bottom: 20px;
+    }
+
+    .sidebar-motivation {
+        padding: 16px;
+        border-radius: 14px;
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        font-size: 13px;
+        line-height: 1.6;
     }
 
 
-    /* ================================
-       AUDIO CARD
-    ================================= */
+    /* ======================================================
+       HEADER
+    ====================================================== */
 
-    .audio-card {
+    .project-title {
+        font-size: 42px;
+        font-weight: 750;
+        letter-spacing: -1.2px;
+        margin-bottom: 3px;
+    }
 
-        padding: 18px;
+    .project-subtitle {
+        color: #6b7280;
+        font-size: 16px;
+        margin-bottom: 28px;
+    }
 
-        border-radius: 16px;
 
-        background: #f8fafc;
+    /* ======================================================
+       UPLOAD CARD
+    ====================================================== */
 
+    .upload-card {
+        padding: 25px;
+        border-radius: 20px;
         border: 1px solid #e5e7eb;
+        background: #ffffff;
+        margin-bottom: 25px;
+    }
 
+
+    /* ======================================================
+       SECTION TITLES
+    ====================================================== */
+
+    .section-heading {
+        font-size: 22px;
+        font-weight: 700;
+        margin-top: 25px;
         margin-bottom: 15px;
     }
 
 
-    /* ================================
-       INFO BOX
-    ================================= */
+    /* ======================================================
+       DOCUMENT CARD
+    ====================================================== */
 
-    .project-box {
-
-        padding: 20px;
-
-        border-radius: 18px;
-
-        background: #f8fafc;
-
+    .document-card {
+        padding: 18px 20px;
+        border-radius: 16px;
         border: 1px solid #e5e7eb;
-
+        background: #ffffff;
         margin-top: 20px;
+        margin-bottom: 20px;
+    }
+
+    .document-name {
+        font-size: 17px;
+        font-weight: 650;
+    }
+
+    .document-info {
+        color: #6b7280;
+        font-size: 13px;
+        margin-top: 5px;
+    }
+
+
+    /* ======================================================
+       STATISTICS
+    ====================================================== */
+
+    .stat-card {
+        padding: 20px;
+        border-radius: 17px;
+        border: 1px solid #e5e7eb;
+        background: #ffffff;
+        min-height: 105px;
+    }
+
+    .stat-label {
+        color: #6b7280;
+        font-size: 13px;
+    }
+
+    .stat-number {
+        font-size: 28px;
+        font-weight: 750;
+        margin-top: 6px;
+    }
+
+
+    /* ======================================================
+       CONTENT CARD
+    ====================================================== */
+
+    .content-card {
+        padding: 20px;
+        border-radius: 17px;
+        border: 1px solid #e5e7eb;
+        background: #ffffff;
+        margin-bottom: 15px;
+    }
+
+
+    /* ======================================================
+       FOOTER
+    ====================================================== */
+
+    .footer-line {
+        margin-top: 45px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+        text-align: center;
+        color: #6b7280;
+        font-size: 14px;
+    }
+
+    .footer-brand {
+        font-weight: 650;
+        margin-top: 7px;
     }
 
     </style>
@@ -206,39 +220,31 @@ st.markdown(
 # SESSION STATE
 # ============================================================
 
-if "pages" not in st.session_state:
+defaults = {
 
-    st.session_state.pages = []
+    "pages": [],
 
+    "current_page": 0,
 
-if "current_page" not in st.session_state:
+    "file_name": "",
 
-    st.session_state.current_page = 0
+    "file_id": None,
 
+    "page_audio": None,
 
-if "file_name" not in st.session_state:
+    "paragraph_audio": {},
 
-    st.session_state.file_name = ""
+    "sentence_audio": {},
 
-
-if "file_id" not in st.session_state:
-
-    st.session_state.file_id = None
-
-
-if "page_audio" not in st.session_state:
-
-    st.session_state.page_audio = None
+    "detected_language": "en"
+}
 
 
-if "paragraph_audio" not in st.session_state:
+for key, value in defaults.items():
 
-    st.session_state.paragraph_audio = {}
+    if key not in st.session_state:
 
-
-if "sentence_audio" not in st.session_state:
-
-    st.session_state.sentence_audio = {}
+        st.session_state[key] = value
 
 
 # ============================================================
@@ -261,11 +267,12 @@ def clear_all():
 
     st.session_state.sentence_audio = {}
 
+    st.session_state.detected_language = "en"
+
+    # Remove uploaded file widget state
     if "document_uploader" in st.session_state:
 
-        del st.session_state[
-            "document_uploader"
-        ]
+        del st.session_state["document_uploader"]
 
 
 # ============================================================
@@ -276,9 +283,7 @@ def extract_pdf(uploaded_file):
 
     pages = []
 
-    reader = PdfReader(
-        uploaded_file
-    )
+    reader = PdfReader(uploaded_file)
 
     for page in reader.pages:
 
@@ -292,19 +297,19 @@ def extract_pdf(uploaded_file):
 
         else:
 
-            pages.append(
-                ""
-            )
+            pages.append("")
+
 
     return pages
 
 
 # ============================================================
-# PARAGRAPH DETECTION
+# GET PARAGRAPHS
 # ============================================================
 
 def get_paragraphs(text):
 
+    # First try normal paragraph separation
     paragraphs = re.split(
         r"\n\s*\n",
         text
@@ -312,25 +317,33 @@ def get_paragraphs(text):
 
     paragraphs = [
 
-        paragraph.strip()
+        p.strip()
 
-        for paragraph in paragraphs
+        for p in paragraphs
 
-        if paragraph.strip()
+        if p.strip()
 
     ]
+
+    # If PDF extraction produced no paragraph breaks,
+    # treat the whole page as one paragraph.
+    if not paragraphs and text.strip():
+
+        paragraphs = [
+            text.strip()
+        ]
 
     return paragraphs
 
 
 # ============================================================
-# SENTENCE DETECTION
+# GET SENTENCES
 # ============================================================
 
 def get_sentences(text):
 
     sentences = re.split(
-        r"(?<=[.!?।])\s+",
+        r"(?<=[.!?।！？])\s+",
         text
     )
 
@@ -348,33 +361,128 @@ def get_sentences(text):
 
 
 # ============================================================
-# CREATE VOICE
+# LANGUAGE DETECTION
 # ============================================================
 
-def create_voice(
+def detect_language(text):
+
+    try:
+
+        detected = detect(
+            text[:3000]
+        )
+
+        return detected
+
+    except:
+
+        return "en"
+
+
+# ============================================================
+# LANGUAGE MAPPING FOR gTTS
+# ============================================================
+
+LANGUAGE_MAP = {
+
+    "en": "en",
+
+    "hi": "hi",
+
+    "kn": "kn",
+
+    "te": "te",
+
+    "ta": "ta",
+
+    "ml": "ml",
+
+    "mr": "mr",
+
+    "bn": "bn",
+
+    "gu": "gu",
+
+    "pa": "pa",
+
+    "ur": "ur",
+
+    "ne": "ne",
+
+    "fr": "fr",
+
+    "de": "de",
+
+    "es": "es",
+
+    "it": "it",
+
+    "pt": "pt",
+
+    "ru": "ru",
+
+    "ar": "ar",
+
+    "ja": "ja",
+
+    "ko": "ko",
+
+    "zh-cn": "zh-CN",
+
+    "zh-tw": "zh-TW",
+
+    "id": "id",
+
+    "tr": "tr",
+
+    "vi": "vi",
+
+    "th": "th"
+
+}
+
+
+# ============================================================
+# CREATE AUDIO
+# ============================================================
+
+def create_audio(
     text,
-    filename
+    filename,
+    language
 ):
 
     if not text.strip():
 
         return None
 
+
     try:
 
-        # Detect language automatically
-
-        audio = gTTS(
-            text=text,
-            lang="en",
-            slow=False
+        gtts_language = LANGUAGE_MAP.get(
+            language,
+            "en"
         )
 
-        audio.save(
+
+        tts = gTTS(
+
+            text=text,
+
+            lang=gtts_language,
+
+            slow=False
+
+        )
+
+
+        tts.save(
             filename
         )
 
+
         return filename
+
 
     except Exception as e:
 
@@ -392,26 +500,28 @@ def create_voice(
 with st.sidebar:
 
     st.markdown(
-        "## 🎙️ Document Voice"
+        """
+        <div class="sidebar-brand">
+            🎙️ Document Voice
+        </div>
+
+        <div class="sidebar-subtitle">
+            Document-Audio Studio
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
-    st.caption(
-        "Modern Document Audio Studio"
-    )
 
     st.divider()
 
 
-    # ========================================================
-    # NAVIGATION
-    # ========================================================
-
     st.markdown(
-        "### Navigation"
+        "### NAVIGATION"
     )
 
 
-    page_selection = st.radio(
+    navigation = st.radio(
 
         "Navigation",
 
@@ -430,53 +540,24 @@ with st.sidebar:
     st.divider()
 
 
-    # ========================================================
-    # DOCUMENT UPLOAD
-    # ========================================================
+    st.markdown(
+        "### 💡 Motivation"
+    )
+
 
     st.markdown(
-        "### Document"
+        """
+        <div class="sidebar-motivation">
+
+        <b>
+        "Read less. Listen more.
+        Learn better."
+        </b>
+
+        </div>
+        """,
+        unsafe_allow_html=True
     )
-
-
-    uploaded_file = st.file_uploader(
-
-        "Upload your document",
-
-        type=["pdf"],
-
-        key="document_uploader",
-
-        label_visibility="collapsed"
-
-    )
-
-
-    if uploaded_file:
-
-        st.success(
-            "✓ Document ready"
-        )
-
-
-    st.divider()
-
-
-    # ========================================================
-    # CLEAR ALL
-    # ========================================================
-
-    if st.button(
-
-        "🧹 Clear All",
-
-        use_container_width=True
-
-    ):
-
-        clear_all()
-
-        st.rerun()
 
 
     st.divider()
@@ -492,7 +573,71 @@ with st.sidebar:
 
 
 # ============================================================
-# PROCESS UPLOADED FILE
+# MAIN HEADER
+# ============================================================
+
+st.markdown(
+    """
+    <div class="project-title">
+        🎙️ Document Voice Studio
+    </div>
+
+    <div class="project-subtitle">
+        Transform your documents into voice
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+
+# ============================================================
+# PDF UPLOAD
+# ============================================================
+
+if navigation == "🏠 Dashboard":
+
+    st.markdown(
+        """
+        <div class="section-heading">
+            📄 Upload Your Document
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+    st.markdown(
+        """
+        <div class="upload-card">
+
+        <b>Upload a PDF document</b>
+
+        <br><br>
+
+        Drag and drop your PDF here,
+        or choose a file from your computer.
+
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+uploaded_file = st.file_uploader(
+
+    "Browse files",
+
+    type=["pdf"],
+
+    key="document_uploader",
+
+    label_visibility="visible"
+
+)
+
+
+# ============================================================
+# PROCESS PDF
 # ============================================================
 
 if uploaded_file is not None:
@@ -507,130 +652,147 @@ if uploaded_file is not None:
 
 
     if (
-
         st.session_state.file_id
-
         != current_file_id
-
     ):
 
-        try:
+        with st.spinner(
+            "Reading your document..."
+        ):
 
-            st.session_state.pages = (
+            try:
 
-                extract_pdf(
+                pages = extract_pdf(
                     uploaded_file
                 )
 
-            )
 
-            st.session_state.current_page = 0
+                st.session_state.pages = pages
 
-            st.session_state.file_name = (
-                uploaded_file.name
-            )
+                st.session_state.current_page = 0
 
-            st.session_state.file_id = (
-                current_file_id
-            )
+                st.session_state.file_name = (
+                    uploaded_file.name
+                )
 
-            st.session_state.page_audio = None
-
-            st.session_state.paragraph_audio = {}
-
-            st.session_state.sentence_audio = {}
+                st.session_state.file_id = (
+                    current_file_id
+                )
 
 
-        except Exception as e:
+                st.session_state.page_audio = None
 
-            st.error(
-                f"PDF error: {e}"
-            )
+                st.session_state.paragraph_audio = {}
+
+                st.session_state.sentence_audio = {}
+
+
+                # Detect language from document
+                full_text_sample = " ".join(
+                    pages
+                )[:3000]
+
+
+                st.session_state.detected_language = (
+                    detect_language(
+                        full_text_sample
+                    )
+                )
+
+
+            except Exception as e:
+
+                st.error(
+                    f"Could not read PDF: {e}"
+                )
 
 
 # ============================================================
-# EMPTY DASHBOARD
+# IF NO DOCUMENT
 # ============================================================
 
 if not st.session_state.pages:
 
+    if navigation == "🏠 Dashboard":
+
+        st.info(
+            "📄 Upload a PDF above to start "
+            "using Document Voice Studio."
+        )
+
+
+        st.markdown(
+            """
+            <div class="content-card">
+
+            <h3>How it works</h3>
+
+            <p>
+            <b>1.</b> Upload your PDF
+            </p>
+
+            <p>
+            <b>2.</b> Read the document page by page
+            </p>
+
+            <p>
+            <b>3.</b> Explore paragraphs and sentences
+            </p>
+
+            <p>
+            <b>4.</b> Convert content into voice
+            </p>
+
+            <p>
+            <b>5.</b> Download the generated audio
+            </p>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+    else:
+
+        st.info(
+            "📄 Please upload a PDF from the "
+            "Dashboard first."
+        )
+
+
+    # --------------------------------------------------------
+    # FOOTER
+    # --------------------------------------------------------
+
     st.markdown(
-        '<div class="main-title">'
-        '🎙️ Document Voice Studio'
-        '</div>',
+        """
+        <div class="footer-line">
+
+        "Give your words a voice."
+
+        <div class="footer-brand">
+            🎙️ Document Voice Studio
+        </div>
+
+        </div>
+        """,
         unsafe_allow_html=True
     )
-
-
-    st.markdown(
-        '<div class="main-subtitle">'
-        'Transform your documents into readable '
-        'and listenable content.'
-        '</div>',
-        unsafe_allow_html=True
-    )
-
-
-    # ========================================================
-    # WELCOME
-    # ========================================================
-
-    st.info(
-        "📄 Upload a PDF from the sidebar "
-        "to start your document."
-    )
-
-
-    col1, col2, col3 = st.columns(3)
-
-
-    with col1:
-
-        st.markdown(
-            """
-            ### 📖 Read
-
-            Read your document page by page.
-            """
-        )
-
-
-    with col2:
-
-        st.markdown(
-            """
-            ### 📝 Analyse
-
-            Explore paragraphs and sentences.
-            """
-        )
-
-
-    with col3:
-
-        st.markdown(
-            """
-            ### 🎙️ Listen
-
-            Convert content into voice.
-            """
-        )
 
 
     st.stop()
 
 
 # ============================================================
-# DOCUMENT DATA
+# DOCUMENT VARIABLES
 # ============================================================
 
 pages = st.session_state.pages
 
 total_pages = len(pages)
 
-current_page = (
-    st.session_state.current_page
-)
+current_page = st.session_state.current_page
 
 current_text = pages[
     current_page
@@ -664,23 +826,32 @@ sentence_count = len(
 
 
 # ============================================================
-# DASHBOARD
+# DOCUMENT CARD
 # ============================================================
 
-if page_selection == "🏠 Dashboard":
+if navigation == "🏠 Dashboard":
 
     st.markdown(
-        '<div class="main-title">'
-        '🏠 Dashboard'
-        '</div>',
-        unsafe_allow_html=True
+        "### YOUR DOCUMENT"
     )
 
 
     st.markdown(
-        '<div class="main-subtitle">'
-        f'{st.session_state.file_name}'
-        '</div>',
+        f"""
+        <div class="document-card">
+
+        <div class="document-name">
+            📄 {st.session_state.file_name}
+        </div>
+
+        <div class="document-info">
+            {total_pages} Pages
+            •
+            {character_count:,} Characters
+        </div>
+
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
@@ -689,67 +860,123 @@ if page_selection == "🏠 Dashboard":
     # STATISTICS
     # ========================================================
 
-    col1, col2, col3, col4, col5 = st.columns(5)
+    c1, c2, c3, c4, c5 = st.columns(5)
 
 
-    with col1:
+    with c1:
 
-        st.metric(
-            "📄 Pages",
-            total_pages
+        st.markdown(
+            f"""
+            <div class="stat-card">
+
+            <div class="stat-label">
+            📄 Pages
+            </div>
+
+            <div class="stat-number">
+            {total_pages}
+            </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
 
-    with col2:
+    with c2:
 
-        st.metric(
-            "🔤 Characters",
-            character_count
+        st.markdown(
+            f"""
+            <div class="stat-card">
+
+            <div class="stat-label">
+            🔤 Characters
+            </div>
+
+            <div class="stat-number">
+            {character_count:,}
+            </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
 
-    with col3:
+    with c3:
 
-        st.metric(
-            "📝 Words",
-            word_count
+        st.markdown(
+            f"""
+            <div class="stat-card">
+
+            <div class="stat-label">
+            📝 Words
+            </div>
+
+            <div class="stat-number">
+            {word_count:,}
+            </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
 
-    with col4:
+    with c4:
 
-        st.metric(
-            "📑 Paragraphs",
-            paragraph_count
+        st.markdown(
+            f"""
+            <div class="stat-card">
+
+            <div class="stat-label">
+            📑 Paragraphs
+            </div>
+
+            <div class="stat-number">
+            {paragraph_count}
+            </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
 
-    with col5:
+    with c5:
 
-        st.metric(
-            "🔤 Sentences",
-            sentence_count
+        st.markdown(
+            f"""
+            <div class="stat-card">
+
+            <div class="stat-label">
+            🔤 Sentences
+            </div>
+
+            <div class="stat-number">
+            {sentence_count}
+            </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
+
+# ============================================================
+# PAGE NAVIGATION
+# ============================================================
+
+if navigation in [
+    "🏠 Dashboard",
+    "📄 Document",
+    "🎙️ Voice Studio"
+]:
 
     st.markdown(
-        '<div class="section-title">'
-        '📖 Current Document'
-        '</div>',
-        unsafe_allow_html=True
+        "### 📖 Page Navigation"
     )
 
-
-    st.info(
-        f"Currently viewing "
-        f"page {current_page + 1} "
-        f"of {total_pages}."
-    )
-
-
-    # ========================================================
-    # PAGE NAVIGATION
-    # ========================================================
 
     col1, col2, col3 = st.columns(
         [1, 2, 1]
@@ -759,12 +986,14 @@ if page_selection == "🏠 Dashboard":
     with col1:
 
         if st.button(
-            "⬅️ Previous",
+            "← Previous",
             use_container_width=True,
             disabled=current_page == 0
         ):
 
             st.session_state.current_page -= 1
+
+            st.session_state.page_audio = None
 
             st.rerun()
 
@@ -773,7 +1002,7 @@ if page_selection == "🏠 Dashboard":
 
         selected_page = st.number_input(
 
-            "Page",
+            "Current Page",
 
             min_value=1,
 
@@ -793,28 +1022,39 @@ if page_selection == "🏠 Dashboard":
                 selected_page - 1
             )
 
+            st.session_state.page_audio = None
+
             st.rerun()
 
 
     with col3:
 
         if st.button(
-            "Next ➡️",
+            "Next →",
             use_container_width=True,
             disabled=current_page == total_pages - 1
         ):
 
             st.session_state.current_page += 1
 
+            st.session_state.page_audio = None
+
             st.rerun()
 
 
-    # ========================================================
-    # PAGE TEXT
-    # ========================================================
+# ============================================================
+# DOCUMENT PAGE
+# ============================================================
+
+if navigation == "📄 Document":
 
     st.markdown(
-        f"### 📖 Page {current_page + 1}"
+        f"## 📄 Page {current_page + 1}"
+    )
+
+
+    st.caption(
+        f"Document: {st.session_state.file_name}"
     )
 
 
@@ -824,119 +1064,13 @@ if page_selection == "🏠 Dashboard":
 
         value=current_text,
 
-        height=350
+        height=450
 
     )
 
-
-# ============================================================
-# DOCUMENT PAGE
-# ============================================================
-
-elif page_selection == "📄 Document":
 
     st.markdown(
-        '<div class="main-title">'
-        '📄 Document Reader'
-        '</div>',
-        unsafe_allow_html=True
-    )
-
-
-    st.caption(
-        f"Page {current_page + 1} "
-        f"of {total_pages}"
-    )
-
-
-    # ========================================================
-    # NAVIGATION
-    # ========================================================
-
-    col1, col2, col3 = st.columns(
-        [1, 2, 1]
-    )
-
-
-    with col1:
-
-        if st.button(
-            "⬅️ Previous",
-            use_container_width=True,
-            disabled=current_page == 0
-        ):
-
-            st.session_state.current_page -= 1
-
-            st.rerun()
-
-
-    with col2:
-
-        selected_page = st.number_input(
-
-            "Go to page",
-
-            min_value=1,
-
-            max_value=total_pages,
-
-            value=current_page + 1
-
-        )
-
-
-        if (
-            selected_page - 1
-            != current_page
-        ):
-
-            st.session_state.current_page = (
-                selected_page - 1
-            )
-
-            st.rerun()
-
-
-    with col3:
-
-        if st.button(
-            "Next ➡️",
-            use_container_width=True,
-            disabled=current_page == total_pages - 1
-        ):
-
-            st.session_state.current_page += 1
-
-            st.rerun()
-
-
-    # ========================================================
-    # PAGE TEXT
-    # ========================================================
-
-    st.subheader(
-        f"📖 Page {current_page + 1}"
-    )
-
-
-    st.text_area(
-
-        "Document Content",
-
-        value=current_text,
-
-        height=500
-
-    )
-
-
-    # ========================================================
-    # STATISTICS
-    # ========================================================
-
-    st.subheader(
-        "📊 Page Statistics"
+        "### 📊 Page Statistics"
     )
 
 
@@ -947,7 +1081,7 @@ elif page_selection == "📄 Document":
 
         st.metric(
             "Characters",
-            character_count
+            f"{character_count:,}"
         )
 
 
@@ -955,7 +1089,7 @@ elif page_selection == "📄 Document":
 
         st.metric(
             "Words",
-            word_count
+            f"{word_count:,}"
         )
 
 
@@ -975,22 +1109,71 @@ elif page_selection == "📄 Document":
         )
 
 
+    st.markdown(
+        "### 📝 Paragraphs"
+    )
+
+
+    for i, paragraph in enumerate(
+        paragraphs
+    ):
+
+        with st.expander(
+            f"Paragraph {i + 1}"
+        ):
+
+            st.write(
+                paragraph
+            )
+
+
+    st.markdown(
+        "### 🔤 Sentences"
+    )
+
+
+    for i, sentence in enumerate(
+        sentences
+    ):
+
+        with st.expander(
+            f"Sentence {i + 1}"
+        ):
+
+            st.write(
+                sentence
+            )
+
+
 # ============================================================
 # VOICE STUDIO
 # ============================================================
 
-elif page_selection == "🎙️ Voice Studio":
+elif navigation == "🎙️ Voice Studio":
 
     st.markdown(
-        '<div class="main-title">'
-        '🎙️ Voice Studio'
-        '</div>',
-        unsafe_allow_html=True
+        "## 🎙️ Voice Studio"
     )
 
 
     st.caption(
-        "Convert paragraphs and sentences into voice."
+        "Convert pages, paragraphs and sentences "
+        "into downloadable audio."
+    )
+
+
+    # ========================================================
+    # LANGUAGE
+    # ========================================================
+
+    detected_language = (
+        st.session_state.detected_language
+    )
+
+
+    st.info(
+        f"🌐 Detected document language: "
+        f"**{detected_language}**"
     )
 
 
@@ -998,8 +1181,8 @@ elif page_selection == "🎙️ Voice Studio":
     # PAGE VOICE
     # ========================================================
 
-    st.subheader(
-        f"📖 Page {current_page + 1} Voice"
+    st.markdown(
+        f"### 📖 Page {current_page + 1} Voice"
     )
 
 
@@ -1009,7 +1192,7 @@ elif page_selection == "🎙️ Voice Studio":
     ):
 
         filename = (
-            f"page_{current_page + 1}.mp3"
+            f"page_{current_page + 1}_voice.mp3"
         )
 
 
@@ -1017,17 +1200,20 @@ elif page_selection == "🎙️ Voice Studio":
             "Generating page voice..."
         ):
 
-            audio = create_voice(
+            audio = create_audio(
+
                 current_text,
-                filename
+
+                filename,
+
+                detected_language
+
             )
 
 
         if audio:
 
-            st.session_state.page_audio = (
-                audio
-            )
+            st.session_state.page_audio = audio
 
             st.success(
                 "✅ Page voice generated."
@@ -1052,13 +1238,15 @@ elif page_selection == "🎙️ Voice Studio":
 
                 data=file,
 
-                file_name=(
-                    f"page_{current_page + 1}.mp3"
+                file_name=os.path.basename(
+                    st.session_state.page_audio
                 ),
 
                 mime="audio/mpeg",
 
-                use_container_width=True
+                use_container_width=True,
+
+                key="download_page_audio"
 
             )
 
@@ -1069,12 +1257,20 @@ elif page_selection == "🎙️ Voice Studio":
 
     st.divider()
 
-    st.subheader(
-        "📝 Paragraph Voice"
+
+    st.markdown(
+        "### 📝 Paragraph Voice"
     )
 
 
-    for index, paragraph in enumerate(
+    if not paragraphs:
+
+        st.warning(
+            "No paragraphs found."
+        )
+
+
+    for i, paragraph in enumerate(
         paragraphs
     ):
 
@@ -1083,7 +1279,7 @@ elif page_selection == "🎙️ Voice Studio":
         ):
 
             st.markdown(
-                f"### Paragraph {index + 1}"
+                f"**Paragraph {i + 1}**"
             )
 
 
@@ -1093,17 +1289,22 @@ elif page_selection == "🎙️ Voice Studio":
 
 
             st.caption(
-                f"{len(paragraph)} characters • "
-                f"{len(paragraph.split())} words"
+                f"{len(paragraph):,} characters "
+                f"• "
+                f"{len(paragraph.split()):,} words"
+            )
+
+
+            paragraph_key = (
+                f"{current_page}_{i}"
             )
 
 
             if st.button(
 
-                f"🎙️ Generate Voice "
-                f"for Paragraph {index + 1}",
+                f"🎙️ Generate Paragraph {i + 1} Voice",
 
-                key=f"paragraph_{current_page}_{index}",
+                key=f"paragraph_button_{current_page}_{i}",
 
                 use_container_width=True
 
@@ -1114,20 +1315,22 @@ elif page_selection == "🎙️ Voice Studio":
                     f"page_"
                     f"{current_page + 1}_"
                     f"paragraph_"
-                    f"{index + 1}.mp3"
+                    f"{i + 1}.mp3"
 
                 )
 
 
                 with st.spinner(
-                    "Generating paragraph voice..."
+                    "Creating paragraph voice..."
                 ):
 
-                    audio = create_voice(
+                    audio = create_audio(
 
                         paragraph,
 
-                        filename
+                        filename,
+
+                        detected_language
 
                     )
 
@@ -1135,27 +1338,22 @@ elif page_selection == "🎙️ Voice Studio":
                 if audio:
 
                     st.session_state.paragraph_audio[
-                        f"{current_page}_{index}"
+                        paragraph_key
                     ] = audio
 
 
                     st.success(
-                        "✅ Paragraph voice ready."
+                        f"Paragraph {i + 1} voice ready."
                     )
 
 
-            audio_key = (
-                f"{current_page}_{index}"
-            )
-
-
-            if audio_key in (
+            if paragraph_key in (
                 st.session_state.paragraph_audio
             ):
 
                 audio_file = (
                     st.session_state.paragraph_audio[
-                        audio_key
+                        paragraph_key
                     ]
                 )
 
@@ -1183,9 +1381,9 @@ elif page_selection == "🎙️ Voice Studio":
                         mime="audio/mpeg",
 
                         key=(
-                            f"download_para_"
+                            f"download_paragraph_"
                             f"{current_page}_"
-                            f"{index}"
+                            f"{i}"
                         ),
 
                         use_container_width=True
@@ -1199,12 +1397,13 @@ elif page_selection == "🎙️ Voice Studio":
 
     st.divider()
 
-    st.subheader(
-        "🔤 Sentence Voice"
+
+    st.markdown(
+        "### 🔤 Sentence Voice"
     )
 
 
-    for index, sentence in enumerate(
+    for i, sentence in enumerate(
         sentences
     ):
 
@@ -1213,7 +1412,7 @@ elif page_selection == "🎙️ Voice Studio":
         ):
 
             st.markdown(
-                f"### Sentence {index + 1}"
+                f"**Sentence {i + 1}**"
             )
 
 
@@ -1222,12 +1421,16 @@ elif page_selection == "🎙️ Voice Studio":
             )
 
 
+            sentence_key = (
+                f"{current_page}_{i}"
+            )
+
+
             if st.button(
 
-                f"🎙️ Generate Voice "
-                f"for Sentence {index + 1}",
+                f"🎙️ Generate Sentence {i + 1} Voice",
 
-                key=f"sentence_{current_page}_{index}",
+                key=f"sentence_button_{current_page}_{i}",
 
                 use_container_width=True
 
@@ -1238,20 +1441,22 @@ elif page_selection == "🎙️ Voice Studio":
                     f"page_"
                     f"{current_page + 1}_"
                     f"sentence_"
-                    f"{index + 1}.mp3"
+                    f"{i + 1}.mp3"
 
                 )
 
 
                 with st.spinner(
-                    "Generating sentence voice..."
+                    "Creating sentence voice..."
                 ):
 
-                    audio = create_voice(
+                    audio = create_audio(
 
                         sentence,
 
-                        filename
+                        filename,
+
+                        detected_language
 
                     )
 
@@ -1259,27 +1464,22 @@ elif page_selection == "🎙️ Voice Studio":
                 if audio:
 
                     st.session_state.sentence_audio[
-                        f"{current_page}_{index}"
+                        sentence_key
                     ] = audio
 
 
                     st.success(
-                        "✅ Sentence voice ready."
+                        f"Sentence {i + 1} voice ready."
                     )
 
 
-            audio_key = (
-                f"{current_page}_{index}"
-            )
-
-
-            if audio_key in (
+            if sentence_key in (
                 st.session_state.sentence_audio
             ):
 
                 audio_file = (
                     st.session_state.sentence_audio[
-                        audio_key
+                        sentence_key
                     ]
                 )
 
@@ -1309,7 +1509,7 @@ elif page_selection == "🎙️ Voice Studio":
                         key=(
                             f"download_sentence_"
                             f"{current_page}_"
-                            f"{index}"
+                            f"{i}"
                         ),
 
                         use_container_width=True
@@ -1321,57 +1521,41 @@ elif page_selection == "🎙️ Voice Studio":
 # ANALYTICS
 # ============================================================
 
-elif page_selection == "📊 Analytics":
+elif navigation == "📊 Analytics":
 
     st.markdown(
-        '<div class="main-title">'
-        '📊 Document Analytics'
-        '</div>',
-        unsafe_allow_html=True
+        "## 📊 Document Analytics"
     )
 
 
-    st.caption(
-        "Overview of your current document."
-    )
-
-
-    # ========================================================
-    # TOTAL DOCUMENT TEXT
-    # ========================================================
-
-    full_document = "\n".join(
+    full_text = "\n".join(
         pages
     )
 
 
     total_characters = len(
-        full_document
+        full_text
     )
 
 
     total_words = len(
-        full_document.split()
+        full_text.split()
     )
 
 
     total_paragraphs = len(
         get_paragraphs(
-            full_document
+            full_text
         )
     )
 
 
     total_sentences = len(
         get_sentences(
-            full_document
+            full_text
         )
     )
 
-
-    # ========================================================
-    # ANALYTICS CARDS
-    # ========================================================
 
     c1, c2, c3, c4 = st.columns(4)
 
@@ -1379,7 +1563,7 @@ elif page_selection == "📊 Analytics":
     with c1:
 
         st.metric(
-            "📄 Total Pages",
+            "📄 Pages",
             total_pages
         )
 
@@ -1388,7 +1572,7 @@ elif page_selection == "📊 Analytics":
 
         st.metric(
             "🔤 Characters",
-            total_characters
+            f"{total_characters:,}"
         )
 
 
@@ -1396,66 +1580,112 @@ elif page_selection == "📊 Analytics":
 
         st.metric(
             "📝 Words",
-            total_words
+            f"{total_words:,}"
         )
 
 
     with c4:
 
         st.metric(
-            "📑 Paragraphs",
-            total_paragraphs
+            "🔤 Sentences",
+            total_sentences
         )
 
 
     st.divider()
 
 
-    st.metric(
-        "🔤 Total Sentences",
-        total_sentences
-    )
-
-
-    # ========================================================
-    # DOCUMENT SUMMARY
-    # ========================================================
-
-    st.subheader(
-        "📋 Document Summary"
+    st.markdown(
+        "### 📋 Document Information"
     )
 
 
     st.write(
-        f"**Document:** "
-        f"{st.session_state.file_name}"
+        f"**File:** {st.session_state.file_name}"
     )
 
 
     st.write(
-        f"**Pages:** {total_pages}"
+        f"**Total Pages:** {total_pages}"
     )
 
 
     st.write(
-        f"**Characters:** "
-        f"{total_characters}"
+        f"**Total Characters:** "
+        f"{total_characters:,}"
     )
 
 
     st.write(
-        f"**Words:** "
-        f"{total_words}"
+        f"**Total Words:** "
+        f"{total_words:,}"
     )
 
 
     st.write(
-        f"**Paragraphs:** "
+        f"**Total Paragraphs:** "
         f"{total_paragraphs}"
     )
 
 
     st.write(
-        f"**Sentences:** "
+        f"**Total Sentences:** "
         f"{total_sentences}"
     )
+
+
+    st.write(
+        f"**Detected Language:** "
+        f"{st.session_state.detected_language}"
+    )
+
+
+# ============================================================
+# CLEAR ALL
+# ============================================================
+# IMPORTANT:
+# This button is BEFORE the footer and NOT in sidebar.
+
+st.divider()
+
+
+clear_col1, clear_col2, clear_col3 = st.columns(
+    [2, 2, 2]
+)
+
+
+with clear_col2:
+
+    if st.button(
+
+        "🧹 Clear All",
+
+        use_container_width=True,
+
+        type="secondary"
+
+    ):
+
+        clear_all()
+
+        st.rerun()
+
+
+# ============================================================
+# FOOTER
+# ============================================================
+
+st.markdown(
+    """
+    <div class="footer-line">
+
+        "Give your words a voice."
+
+        <div class="footer-brand">
+            🎙️ Document Voice Studio
+        </div>
+
+    </div>
+    """,
+    unsafe_allow_html=True
+)
