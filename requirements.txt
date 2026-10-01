@@ -1,4 +1,4 @@
 streamlit
 pypdf
 gTTS
-deep-translator
+langdetect
