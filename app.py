@@ -3,6 +3,19 @@
 # PDF → TEXT → PAGE → PARAGRAPH → SENTENCE → VOICE
 # ============================================================
 
+# ============================================================
+# INSTALL
+# ============================================================
+# For Streamlit Cloud, put these in requirements.txt:
+#
+# streamlit
+# pypdf
+# gTTS
+# langdetect
+#
+# ============================================================
+
+
 import streamlit as st
 from pypdf import PdfReader
 from gtts import gTTS
@@ -10,6 +23,7 @@ from langdetect import detect
 
 import os
 import re
+import html
 
 
 # ============================================================
@@ -33,7 +47,7 @@ st.markdown(
     <style>
 
     /* ========================================================
-       MAIN APPLICATION
+       GLOBAL
        ======================================================== */
 
     .stApp {
@@ -43,20 +57,15 @@ st.markdown(
 
     .main .block-container {
         max-width: 1450px;
-        padding-top: 2.5rem;
-        padding-bottom: 3rem;
+        padding-top: 2.2rem;
+        padding-bottom: 2rem;
     }
-
-
-    /* ========================================================
-       TEXT
-       ======================================================== */
 
     h1, h2, h3, h4, h5, h6 {
         color: #ffffff !important;
     }
 
-    p {
+    p, span, label {
         color: #d1d5db;
     }
 
@@ -66,8 +75,8 @@ st.markdown(
        ======================================================== */
 
     section[data-testid="stSidebar"] {
-        background: #11151c !important;
-        border-right: 1px solid #29313d;
+        background: #10151c !important;
+        border-right: 1px solid #26303d;
     }
 
     section[data-testid="stSidebar"] * {
@@ -83,68 +92,79 @@ st.markdown(
 
     .sidebar-subtitle {
         font-size: 13px;
-        color: #8995a5 !important;
-        margin-bottom: 22px;
+        color: #8d99a8 !important;
+        margin-bottom: 20px;
     }
 
     .sidebar-section {
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: 1px;
-        color: #8995a5 !important;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 1.4px;
+        color: #7f8b9a !important;
         margin-bottom: 12px;
     }
 
     .motivation-card {
-        background: #171d26;
-        border: 1px solid #2b3543;
-        border-radius: 15px;
-        padding: 16px;
-        margin-top: 10px;
-        line-height: 1.6;
+        background: linear-gradient(
+            145deg,
+            #171e27,
+            #121820
+        );
+
+        border: 1px solid #2b3645;
+        border-radius: 16px;
+
+        padding: 17px;
+
+        margin-top: 8px;
+
+        box-shadow:
+            0 8px 25px rgba(0,0,0,0.20);
     }
 
     .motivation-title {
         color: #ffffff !important;
+        font-size: 14px;
         font-weight: 700;
-        margin-bottom: 6px;
+        line-height: 1.55;
     }
 
     .motivation-text {
-        color: #c7d0dc !important;
-        font-size: 13px;
+        color: #94a3b8 !important;
+        font-size: 12px;
+        margin-top: 9px;
     }
 
 
     /* ========================================================
-       HEADER
+       MAIN HEADER
        ======================================================== */
 
     .project-title {
         color: #ffffff !important;
         font-size: 42px;
-        font-weight: 800;
-        letter-spacing: -1px;
-        margin-bottom: 4px;
+        font-weight: 850;
+        letter-spacing: -1.2px;
+        margin-bottom: 5px;
     }
 
     .project-subtitle {
-        color: #8f9baa !important;
+        color: #8e9baa !important;
         font-size: 16px;
-        margin-bottom: 32px;
+        margin-bottom: 30px;
     }
 
 
     /* ========================================================
-       SECTION TITLE
+       SECTION TITLES
        ======================================================== */
 
     .section-title {
         color: #ffffff !important;
         font-size: 22px;
         font-weight: 750;
-        margin-top: 25px;
-        margin-bottom: 15px;
+        margin-top: 22px;
+        margin-bottom: 14px;
     }
 
 
@@ -153,22 +173,22 @@ st.markdown(
        ======================================================== */
 
     [data-testid="stFileUploader"] {
-        background: #151a22 !important;
-        border: 1px solid #303a48 !important;
+        background: #141a22 !important;
+        border: 1px solid #303b49 !important;
         border-radius: 18px !important;
         padding: 8px !important;
     }
 
     [data-testid="stFileUploaderDropzone"] {
-        background: #151a22 !important;
+        background: #141a22 !important;
         border: 1px dashed #526071 !important;
         border-radius: 14px !important;
-        min-height: 180px !important;
+        min-height: 175px !important;
     }
 
     [data-testid="stFileUploaderDropzone"]:hover {
-        background: #19212b !important;
-        border-color: #60a5fa !important;
+        background: #18212c !important;
+        border-color: #3b82f6 !important;
     }
 
     [data-testid="stFileUploaderDropzoneInstructions"] {
@@ -179,12 +199,8 @@ st.markdown(
         color: #e5e7eb !important;
     }
 
-    [data-testid="stFileUploaderDropzoneInstructions"] span {
-        color: #e5e7eb !important;
-    }
-
     [data-testid="stFileUploaderDropzone"] small {
-        color: #9ca3af !important;
+        color: #8f9baa !important;
     }
 
     [data-testid="stFileUploaderDropzone"] button {
@@ -192,7 +208,7 @@ st.markdown(
         color: #ffffff !important;
         border: none !important;
         border-radius: 9px !important;
-        font-weight: 650 !important;
+        font-weight: 700 !important;
     }
 
     [data-testid="stFileUploaderDropzone"] button:hover {
@@ -201,15 +217,22 @@ st.markdown(
 
 
     /* ========================================================
-       STATISTICS
+       STAT CARDS
        ======================================================== */
 
     .stat-card {
-        background: #151a22;
+        background: #141a22;
+
         border: 1px solid #293442;
+
         border-radius: 16px;
-        padding: 19px;
-        min-height: 105px;
+
+        padding: 18px;
+
+        min-height: 108px;
+
+        box-shadow:
+            0 8px 25px rgba(0,0,0,0.14);
     }
 
     .stat-label {
@@ -219,9 +242,9 @@ st.markdown(
 
     .stat-number {
         color: #ffffff !important;
-        font-size: 28px;
+        font-size: 27px;
         font-weight: 800;
-        margin-top: 6px;
+        margin-top: 7px;
     }
 
 
@@ -230,10 +253,14 @@ st.markdown(
        ======================================================== */
 
     .document-card {
-        background: #151a22;
+        background: #141a22;
+
         border: 1px solid #293442;
+
         border-radius: 16px;
+
         padding: 18px 20px;
+
         margin-top: 22px;
         margin-bottom: 20px;
     }
@@ -252,14 +279,18 @@ st.markdown(
 
 
     /* ========================================================
-       CONTENT CARD
+       CONTENT CARDS
        ======================================================== */
 
     .content-card {
-        background: #151a22;
+        background: #141a22;
+
         border: 1px solid #293442;
+
         border-radius: 17px;
+
         padding: 22px;
+
         margin-bottom: 16px;
     }
 
@@ -277,28 +308,32 @@ st.markdown(
        ======================================================== */
 
     .stButton > button {
-        background: #171d26 !important;
+        background: #171e27 !important;
+
         color: #f8fafc !important;
+
         border: 1px solid #344050 !important;
+
         border-radius: 10px !important;
+
         min-height: 42px;
+
         font-weight: 650 !important;
     }
 
     .stButton > button:hover {
         background: #202a37 !important;
-        border-color: #60a5fa !important;
+
+        border-color: #3b82f6 !important;
+
         color: #ffffff !important;
     }
 
-
-    /* ========================================================
-       PRIMARY BUTTON
-       ======================================================== */
-
     button[kind="primary"] {
         background: #2563eb !important;
+
         color: #ffffff !important;
+
         border: none !important;
     }
 
@@ -312,8 +347,10 @@ st.markdown(
        ======================================================== */
 
     textarea {
-        background: #151a22 !important;
+        background: #141a22 !important;
+
         color: #f8fafc !important;
+
         border: 1px solid #344050 !important;
     }
 
@@ -323,19 +360,23 @@ st.markdown(
        ======================================================== */
 
     div[data-testid="stNumberInput"] input {
-        background: #151a22 !important;
+        background: #141a22 !important;
+
         color: #ffffff !important;
+
         border: 1px solid #344050 !important;
     }
 
 
     /* ========================================================
-       EXPANDERS
+       EXPANDER
        ======================================================== */
 
     [data-testid="stExpander"] {
-        background: #151a22 !important;
+        background: #141a22 !important;
+
         border: 1px solid #293442 !important;
+
         border-radius: 12px !important;
     }
 
@@ -349,18 +390,11 @@ st.markdown(
        ======================================================== */
 
     [data-testid="stAlert"] {
-        background: #151a22 !important;
+        background: #141a22 !important;
+
         color: #e5e7eb !important;
+
         border-radius: 12px !important;
-    }
-
-
-    /* ========================================================
-       DIVIDER
-       ======================================================== */
-
-    hr {
-        border-color: #293442 !important;
     }
 
 
@@ -369,24 +403,35 @@ st.markdown(
        ======================================================== */
 
     .footer-line {
-        margin-top: 45px;
-        padding-top: 22px;
+        margin-top: 35px;
+
+        padding-top: 24px;
+
         border-top: 1px solid #293442;
+
         text-align: center;
+
         color: #9ca3af !important;
+
         font-size: 14px;
     }
 
     .footer-quote {
         color: #cbd5e1 !important;
+
         font-size: 15px;
+
         font-weight: 600;
+
+        line-height: 1.6;
     }
 
     .footer-brand {
         color: #ffffff !important;
-        font-weight: 700;
-        margin-top: 8px;
+
+        font-weight: 750;
+
+        margin-top: 9px;
     }
 
     </style>
@@ -399,33 +444,26 @@ st.markdown(
 # SESSION STATE
 # ============================================================
 
-if "pages" not in st.session_state:
-    st.session_state.pages = []
+defaults = {
+    "pages": [],
+    "current_page": 0,
+    "file_name": "",
+    "file_id": None,
+    "detected_language": "en",
+    "page_audio": None,
+    "paragraph_audio": {},
+    "sentence_audio": {}
+}
 
-if "current_page" not in st.session_state:
-    st.session_state.current_page = 0
+for key, value in defaults.items():
 
-if "file_name" not in st.session_state:
-    st.session_state.file_name = ""
+    if key not in st.session_state:
 
-if "file_id" not in st.session_state:
-    st.session_state.file_id = None
-
-if "detected_language" not in st.session_state:
-    st.session_state.detected_language = "en"
-
-if "page_audio" not in st.session_state:
-    st.session_state.page_audio = None
-
-if "paragraph_audio" not in st.session_state:
-    st.session_state.paragraph_audio = {}
-
-if "sentence_audio" not in st.session_state:
-    st.session_state.sentence_audio = {}
+        st.session_state[key] = value
 
 
 # ============================================================
-# CLEAR ALL FUNCTION
+# CLEAR ALL
 # ============================================================
 
 def clear_all():
@@ -447,6 +485,7 @@ def clear_all():
     st.session_state.sentence_audio = {}
 
     if "document_uploader" in st.session_state:
+
         del st.session_state["document_uploader"]
 
 
@@ -465,20 +504,26 @@ def extract_pdf(uploaded_file):
         text = page.extract_text()
 
         if text:
-            pages.append(text.strip())
+
+            pages.append(
+                text.strip()
+            )
+
         else:
+
             pages.append("")
 
     return pages
 
 
 # ============================================================
-# GET PARAGRAPHS
+# PARAGRAPH DETECTION
 # ============================================================
 
 def get_paragraphs(text):
 
     if not text.strip():
+
         return []
 
     paragraphs = re.split(
@@ -493,18 +538,22 @@ def get_paragraphs(text):
     ]
 
     if not paragraphs:
-        paragraphs = [text.strip()]
+
+        paragraphs = [
+            text.strip()
+        ]
 
     return paragraphs
 
 
 # ============================================================
-# GET SENTENCES
+# SENTENCE DETECTION
 # ============================================================
 
 def get_sentences(text):
 
     if not text.strip():
+
         return []
 
     sentences = re.split(
@@ -530,13 +579,14 @@ def detect_language(text):
     try:
 
         if not text.strip():
+
             return "en"
 
         return detect(
             text[:3000]
         )
 
-    except:
+    except Exception:
 
         return "en"
 
@@ -548,34 +598,57 @@ def detect_language(text):
 LANGUAGE_MAP = {
 
     "en": "en",
+
     "hi": "hi",
+
     "kn": "kn",
+
     "te": "te",
+
     "ta": "ta",
+
     "ml": "ml",
+
     "mr": "mr",
+
     "bn": "bn",
+
     "gu": "gu",
+
     "pa": "pa",
+
     "ur": "ur",
+
     "ne": "ne",
 
     "fr": "fr",
+
     "de": "de",
+
     "es": "es",
+
     "it": "it",
+
     "pt": "pt",
+
     "ru": "ru",
+
     "ar": "ar",
+
     "ja": "ja",
+
     "ko": "ko",
 
     "zh-cn": "zh-CN",
+
     "zh-tw": "zh-TW",
 
     "id": "id",
+
     "tr": "tr",
+
     "vi": "vi",
+
     "th": "th"
 }
 
@@ -591,6 +664,7 @@ def create_audio(
 ):
 
     if not text.strip():
+
         return None
 
     try:
@@ -625,6 +699,10 @@ def create_audio(
 
 with st.sidebar:
 
+    # --------------------------------------------------------
+    # BRAND
+    # --------------------------------------------------------
+
     st.markdown(
         """
         <div class="sidebar-brand">
@@ -639,6 +717,11 @@ with st.sidebar:
     )
 
     st.divider()
+
+
+    # --------------------------------------------------------
+    # NAVIGATION
+    # --------------------------------------------------------
 
     st.markdown(
         """
@@ -660,10 +743,13 @@ with st.sidebar:
         label_visibility="collapsed"
     )
 
+
     st.divider()
 
+
     # --------------------------------------------------------
-    # SIDEBAR MOTIVATION
+    # MOTIVATION
+    # SAME MESSAGE AS FOOTER
     # --------------------------------------------------------
 
     st.markdown(
@@ -675,26 +761,17 @@ with st.sidebar:
         <div class="motivation-card">
 
             <div class="motivation-title">
-                Keep learning.
+                Every word you listen to can become
+                knowledge you remember.
             </div>
 
             <div class="motivation-text">
-                Keep listening. Keep growing.
+                🎙️ Document Voice Studio
             </div>
 
         </div>
         """,
         unsafe_allow_html=True
-    )
-
-    st.divider()
-
-    st.caption(
-        "Document Voice Studio"
-    )
-
-    st.caption(
-        "PDF → Text → Voice"
     )
 
 
@@ -731,16 +808,20 @@ if navigation == "🏠 Dashboard":
         unsafe_allow_html=True
     )
 
-    # ONLY ONE UPLOAD AREA
+
+    # --------------------------------------------------------
+    # PDF UPLOAD
+    # --------------------------------------------------------
+
     uploaded_file = st.file_uploader(
-        "Upload your PDF document",
+        "Drag and drop your PDF here",
         type=["pdf"],
         key="document_uploader"
     )
 
 
     # --------------------------------------------------------
-    # PROCESS UPLOADED FILE
+    # PROCESS PDF
     # --------------------------------------------------------
 
     if uploaded_file is not None:
@@ -749,6 +830,7 @@ if navigation == "🏠 Dashboard":
             uploaded_file.name,
             uploaded_file.size
         )
+
 
         if (
             st.session_state.file_id
@@ -813,35 +895,42 @@ if not st.session_state.pages:
     if navigation == "🏠 Dashboard":
 
         st.info(
-            "📄 Upload a PDF above to start using "
-            "Document Voice Studio."
+            "📄 Upload a PDF above to start "
+            "using Document Voice Studio."
         )
+
 
         st.markdown(
             """
             <div class="content-card">
 
-            <h3>How it works</h3>
+                <h3>How it works</h3>
 
-            <p>
-            <b>01</b> &nbsp; Upload your PDF document
-            </p>
+                <p>
+                    <b>01</b> &nbsp;
+                    Upload your PDF document
+                </p>
 
-            <p>
-            <b>02</b> &nbsp; View the document page by page
-            </p>
+                <p>
+                    <b>02</b> &nbsp;
+                    View your document page by page
+                </p>
 
-            <p>
-            <b>03</b> &nbsp; Read individual paragraphs
-            </p>
+                <p>
+                    <b>03</b> &nbsp;
+                    Read individual paragraphs
+                </p>
 
-            <p>
-            <b>04</b> &nbsp; Convert paragraphs and sentences into voice
-            </p>
+                <p>
+                    <b>04</b> &nbsp;
+                    Convert paragraphs and sentences
+                    into voice
+                </p>
 
-            <p>
-            <b>05</b> &nbsp; Play and download your audio
-            </p>
+                <p>
+                    <b>05</b> &nbsp;
+                    Play and download your audio
+                </p>
 
             </div>
             """,
@@ -856,6 +945,28 @@ if not st.session_state.pages:
 
 
     # --------------------------------------------------------
+    # CLEAR ALL
+    # --------------------------------------------------------
+
+    st.divider()
+
+    clear_col1, clear_col2, clear_col3 = st.columns(
+        [2, 2, 2]
+    )
+
+    with clear_col2:
+
+        if st.button(
+            "🧹 Clear All",
+            use_container_width=True
+        ):
+
+            clear_all()
+
+            st.rerun()
+
+
+    # --------------------------------------------------------
     # FOOTER
     # --------------------------------------------------------
 
@@ -864,7 +975,8 @@ if not st.session_state.pages:
         <div class="footer-line">
 
             <div class="footer-quote">
-                Every word you listen to can become knowledge you remember.
+                Every word you listen to can become
+                knowledge you remember.
             </div>
 
             <div class="footer-brand">
@@ -939,6 +1051,9 @@ if navigation == "🏠 Dashboard":
     c1, c2, c3, c4, c5 = st.columns(5)
 
 
+    total_text = " ".join(pages)
+
+
     with c1:
 
         st.markdown(
@@ -970,7 +1085,7 @@ if navigation == "🏠 Dashboard":
                 </div>
 
                 <div class="stat-number">
-                    {len(" ".join(pages)):,}
+                    {len(total_text):,}
                 </div>
 
             </div>
@@ -990,7 +1105,7 @@ if navigation == "🏠 Dashboard":
                 </div>
 
                 <div class="stat-number">
-                    {len(" ".join(pages).split()):,}
+                    {len(total_text.split()):,}
                 </div>
 
             </div>
@@ -1010,7 +1125,7 @@ if navigation == "🏠 Dashboard":
                 </div>
 
                 <div class="stat-number">
-                    {len(get_paragraphs(" ".join(pages)))}
+                    {len(get_paragraphs(total_text))}
                 </div>
 
             </div>
@@ -1030,7 +1145,7 @@ if navigation == "🏠 Dashboard":
                 </div>
 
                 <div class="stat-number">
-                    {len(get_sentences(" ".join(pages)))}
+                    {len(get_sentences(total_text))}
                 </div>
 
             </div>
@@ -1043,18 +1158,23 @@ if navigation == "🏠 Dashboard":
     # DOCUMENT CARD
     # --------------------------------------------------------
 
+    safe_file_name = html.escape(
+        st.session_state.file_name
+    )
+
+
     st.markdown(
         f"""
         <div class="document-card">
 
             <div class="document-name">
-                📄 {st.session_state.file_name}
+                📄 {safe_file_name}
             </div>
 
             <div class="document-info">
                 {total_pages} Pages
                 •
-                {len(" ".join(pages)):,} Characters
+                {len(total_text):,} Characters
             </div>
 
         </div>
@@ -1181,6 +1301,7 @@ if navigation == "📄 Document":
 
 
     with c1:
+
         st.metric(
             "Characters",
             f"{character_count:,}"
@@ -1188,6 +1309,7 @@ if navigation == "📄 Document":
 
 
     with c2:
+
         st.metric(
             "Words",
             f"{word_count:,}"
@@ -1195,6 +1317,7 @@ if navigation == "📄 Document":
 
 
     with c3:
+
         st.metric(
             "Paragraphs",
             paragraph_count
@@ -1202,6 +1325,7 @@ if navigation == "📄 Document":
 
 
     with c4:
+
         st.metric(
             "Sentences",
             sentence_count
@@ -1271,7 +1395,8 @@ elif navigation == "🎙️ Voice Studio":
 
 
     st.info(
-        f"🌐 Detected language: **{detected_language}**"
+        f"🌐 Detected language: "
+        f"**{detected_language}**"
     )
 
 
@@ -1443,7 +1568,10 @@ elif navigation == "🎙️ Voice Studio":
                             audio_file
                         ),
                         mime="audio/mpeg",
-                        key=f"download_paragraph_{current_page}_{i}",
+                        key=(
+                            f"download_paragraph_"
+                            f"{current_page}_{i}"
+                        ),
                         use_container_width=True
                     )
 
@@ -1552,7 +1680,10 @@ elif navigation == "🎙️ Voice Studio":
                             audio_file
                         ),
                         mime="audio/mpeg",
-                        key=f"download_sentence_{current_page}_{i}",
+                        key=(
+                            f"download_sentence_"
+                            f"{current_page}_{i}"
+                        ),
                         use_container_width=True
                     )
 
@@ -1638,44 +1769,49 @@ elif navigation == "📊 Analytics":
     )
 
 
+    safe_file_name = html.escape(
+        st.session_state.file_name
+    )
+
+
     st.markdown(
         f"""
         <div class="content-card">
 
-        <p>
-        <b>File:</b>
-        {st.session_state.file_name}
-        </p>
+            <p>
+                <b>File:</b>
+                {safe_file_name}
+            </p>
 
-        <p>
-        <b>Total Pages:</b>
-        {total_pages}
-        </p>
+            <p>
+                <b>Total Pages:</b>
+                {total_pages}
+            </p>
 
-        <p>
-        <b>Total Characters:</b>
-        {total_characters:,}
-        </p>
+            <p>
+                <b>Total Characters:</b>
+                {total_characters:,}
+            </p>
 
-        <p>
-        <b>Total Words:</b>
-        {total_words:,}
-        </p>
+            <p>
+                <b>Total Words:</b>
+                {total_words:,}
+            </p>
 
-        <p>
-        <b>Total Paragraphs:</b>
-        {total_paragraphs}
-        </p>
+            <p>
+                <b>Total Paragraphs:</b>
+                {total_paragraphs}
+            </p>
 
-        <p>
-        <b>Total Sentences:</b>
-        {total_sentences}
-        </p>
+            <p>
+                <b>Total Sentences:</b>
+                {total_sentences}
+            </p>
 
-        <p>
-        <b>Detected Language:</b>
-        {st.session_state.detected_language}
-        </p>
+            <p>
+                <b>Detected Language:</b>
+                {st.session_state.detected_language}
+            </p>
 
         </div>
         """,
@@ -1687,8 +1823,9 @@ elif navigation == "📊 Analytics":
 # CLEAR ALL
 # ============================================================
 # IMPORTANT:
-# Clear All is BELOW the main content and BEFORE the footer.
-# It is NOT inside the sidebar.
+# Clear All is BEFORE the footer.
+# It is NOT in the sidebar.
+# ============================================================
 
 st.divider()
 
@@ -1712,6 +1849,7 @@ with clear_col2:
 
 # ============================================================
 # FOOTER
+# SAME MOTIVATION AS SIDEBAR
 # ============================================================
 
 st.markdown(
@@ -1719,7 +1857,8 @@ st.markdown(
     <div class="footer-line">
 
         <div class="footer-quote">
-            Every word you listen to can become knowledge you remember.
+            Every word you listen to can become
+            knowledge you remember.
         </div>
 
         <div class="footer-brand">
