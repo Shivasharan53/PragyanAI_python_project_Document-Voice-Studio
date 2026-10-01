@@ -2333,23 +2333,20 @@ with clear_col2:
 # FOOTER
 # ============================================================
 
-st.divider()
-
-# IMPORTANT:
-# Footer is intentionally made with Streamlit components.
-# No HTML div is used, so <div class="footer-quote">
-# can NEVER appear as visible text.
-
 st.markdown(
     """
     <div style="
+        margin-top:50px;
+        padding:25px 10px 10px 10px;
+        border-top:1px solid #293442;
         text-align:center;
-        padding:20px 10px 5px 10px;
     ">
+
         <div style="
-            color:#cbd5e1;
+            color:#e5e7eb;
             font-size:15px;
-            font-weight:600;
+            font-weight:650;
+            margin-bottom:8px;
         ">
             Every word you listen to can become knowledge you remember.
         </div>
@@ -2370,6 +2367,7 @@ st.markdown(
         ">
             Listen • Learn • Remember • Grow
         </div>
+
     </div>
     """,
     unsafe_allow_html=True
